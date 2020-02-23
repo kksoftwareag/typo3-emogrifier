@@ -13,6 +13,7 @@ namespace WebentwicklerAt\Emogrifier\Utility;
  * LICENSE file that was distributed with this source code.
  */
 
+use Pelago\Emogrifier\CssInliner;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 
 class EmogrifierUtility
@@ -26,18 +27,17 @@ class EmogrifierUtility
     public static function emogrify($content, $css, $extractContent)
     {
         if ($content !== null && $css !== null) {
-            if (!class_exists('\\Pelago\\Emogrifier')) {
+            if (!class_exists('\\Pelago\\Emogrifier\\CssInliner')) {
                 $pharPath = ExtensionManagementUtility::extPath(
                     'emogrifier',
                     'Resources/Private/Php/Emogrifier.phar/vendor/autoload.php'
                 );
                 require_once 'phar://' . $pharPath;
             }
-            $emogrifier = new \Pelago\Emogrifier($content, $css);
-            $content = $emogrifier->emogrify();
-
-            if ($extractContent) {
-                $content = preg_replace('/^.*<body[^>]*>(.*?)<\/body>.*$/sU', '$1', $content);
+            if (!$extractContent) {
+                $content = CssInliner::fromHtml($content)->inlineCss($css)->render();
+            } else {
+                $content = CssInliner::fromHtml($content)->inlineCss($css)->renderBodyContent();
             }
         }
 
